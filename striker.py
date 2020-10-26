@@ -23,7 +23,7 @@ class Striker1():
 		self.stablizer = 5
 
 	def update_pos(self , x_rat  ,y_rat):
-		w_mean = self.width//2 -10
+		w_mean = self.width//2 
 		y_mean = self.height-20
 		self.x_pos = w_mean + ((w_mean*x_rat)//self.stablizer)*self.stablizer
 
@@ -72,11 +72,19 @@ class Computer_striker:
 
 		self.y_pos = 50
 
+		self.x_speed = 2
 
 		self.stablizer = 10
 
 	def update_pos(self , puck):
-		self.x_pos = puck.x_pos
+		if puck.y_pos < self.height:
+			if self.x_pos<=puck.x_pos:
+				self.x_pos += self.x_speed
+			else:
+				self.x_pos -= self.x_speed
+			
+		if puck.y_pos < self.y_pos:
+			self.x_pos = self.width//2
 
 
 
