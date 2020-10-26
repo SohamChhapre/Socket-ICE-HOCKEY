@@ -35,6 +35,7 @@ class Puck():
 		self.x_pos = self.width//2
 		self.y_pos = self.height//2
 		self.max_speed = 5
+		self.disappear = False
 
 	def dist(self,a,b):
 		return ((a.y_pos - b.y_pos)**2 + (a.x_pos-b.x_pos)**2)**0.5
@@ -145,13 +146,13 @@ class Score:
 		self.height = height
 		self.score1 = 0
 		self.score2 = 0
-		self.color = (0,0,0)
+		self.color = (0,0,200)
 		self.back = (255,255,255)
 		self.fontObj = pygame.font.Font('freesansbold.ttf', 20)
 		output = "1: " + str(self.score1) + " || 2: "+str(self.score2)
 		self.textSurfaceObj = self.fontObj.render(output , True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 		
 	def update(self,s1 = 0,s2 = 0):
 
@@ -160,17 +161,23 @@ class Score:
 		output = "1: " + str(self.score1) + " || 2: "+str(self.score2)
 		self.textSurfaceObj = self.fontObj.render(output, True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 
 	def text(self,t):
 		self.textSurfaceObj = self.fontObj.render(t, True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 
 	def draw(self,pygame,DISPLAYSURF):
 		# DISPLAYSURF.fill(self.back)
 		DISPLAYSURF.blit(self.textSurfaceObj, self.textRectObj)
 
+def draw_rect(hieght , width , DISPLAYSURF , pygame):
+	color = (200,200,200)
+	r = ((width//2)-100 , 0 , 200 , 10)
+	pygame.draw.rect(DISPLAYSURF , color , r )
+	r = ((width//2)-100 , height-10 , 200 , 10)
+	pygame.draw.rect(DISPLAYSURF , color , r )
 
 
 def game():
@@ -189,7 +196,11 @@ def game():
 	score.draw(pygame,DISPLAYSURF)
 	pygame.display.update()
 	score.text("GAME STARTS")
+	time.sleep(1)
+	score.update(s1 = 0 , s2=0)
+
 	score.draw(pygame,DISPLAYSURF)
+	
 	pygame.display.update()
 
 
@@ -209,7 +220,7 @@ def game():
 		puck.draw(pygame,DISPLAYSURF)
 		
 		score.draw(pygame,DISPLAYSURF)
-
+		draw_rect(height , width , DISPLAYSURF , pygame)
 		pygame.display.update()
 		fpsClock.tick(FPS)
 
@@ -219,7 +230,7 @@ if __name__ == "__main__":
 	global num_player
 	num_player = int(input("number of players : "))
 	pygame.init()
-	FPS = 100
+	FPS = 50
 	fpsClock = pygame.time.Clock()
 
 	width = 400
