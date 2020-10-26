@@ -1,5 +1,7 @@
 import pygame , sys
+
 import threading
+
 import server
 from pygame.locals import *
 import math
@@ -38,12 +40,17 @@ class Puck():
 		return ((a.y_pos - b.y_pos)**2 + (a.x_pos-b.x_pos)**2)**0.5
 
 	def atan(self,a,b):
-        
-		return math.atan((a.y_pos - b.y_pos) / (a.x_pos - b.y_pos))
+		if abs(a.x_pos - b.x_pos)==0:
+			if (a.y_pos - b.y_pos)>0:
+				return math.pi/2
+			else:
+				return -math.pi/2
+		return math.atan((a.y_pos - b.y_pos) / (a.x_pos - b.x_pos))
 	
 	def update(self , dt , striker1 , striker2):
-		# print("1000001")
-		# if (not(dt)):return
+
+		if (not(dt)):return
+
 
 
 
@@ -55,19 +62,13 @@ class Puck():
 
 			ang = self.atan(striker1 , self)
 
-			if self.x_pos <= striker1.x_pos:
-				# self.x_speed = -math.cos(ang) * self.max_speed
-				# self.y_speed = -math.sin(ang) * self.max_speed
-				
-				self.x_speed = -math.sin(ang) * self.max_speed
-				self.y_speed = -math.cos(ang) * self.max_speed
+			if self.x_pos <= striker1.x_pos:	
+				self.x_speed = -math.cos(ang) * self.max_speed
+				self.y_speed = -math.sin(ang) * self.max_speed
 
 			else:
-				# self.x_speed = math.cos(ang) * self.max_speed
-				# self.y_speed = math.sin(ang) * self.max_speed
-	
-				self.x_speed = math.sin(ang) * self.max_speed
-				self.y_speed = math.cos(ang) * self.max_speed
+				self.x_speed = math.cos(ang) * self.max_speed
+				self.y_speed = math.sin(ang) * self.max_speed
 
 		# collsion with striker 2
 		if (self.dist(striker2 , self) <= striker2.radius + self.radius + 5):
@@ -77,20 +78,13 @@ class Puck():
 
 			ang = self.atan(striker2 , self)
 
-			if self.x_pos <= striker2.x_pos:
-				# self.x_speed = -math.cos(ang) * self.max_speed
-				# self.y_speed = -math.sin(ang) * self.max_speed
-
-				self.x_speed = -math.sin(ang) * self.max_speed
-				self.y_speed = -math.cos(ang) * self.max_speed
-
+			if self.x_pos <= striker2.x_pos:	
+				self.x_speed = -math.cos(ang) * self.max_speed
+				self.y_speed = -math.sin(ang) * self.max_speed
 
 			else:
-				# self.x_speed = math.cos(ang) * self.max_speed
-				# self.y_speed = math.sin(ang) * self.max_speed
-
-				self.x_speed = math.sin(ang) * self.max_speed
-				self.y_speed = math.cos(ang) * self.max_speed
+				self.x_speed = math.cos(ang) * self.max_speed
+				self.y_speed = math.sin(ang) * self.max_speed
 
 
 		# collision with left wall
@@ -132,15 +126,14 @@ class Puck():
 			self.restart("striker1")
 
 		# update position from speed
-		
+
+
 		self.x_pos += self.x_speed * dt * self.c_time
 		self.y_pos += self.y_speed * dt * self.c_time
 
-		# print(10000000000000000001,self.x_pos , self.y_pos)
-		
+
 
 	def draw(self,pygame,DISPLAYSURF):
-		# print("1001")
 		pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
 
 
@@ -202,30 +195,29 @@ def game():
 
 
 
-
+	dt = fpsClock.tick(FPS)
 	while True:
 		dt = fpsClock.tick(FPS)
 		DISPLAYSURF.fill(WHITE)
 		DISPLAYSURF.blit(bg, (0, 0))
 		striker.striker1.draw(pygame,DISPLAYSURF)
+		if num_player==1:
+			striker.striker2.update_pos(puck)
 		striker.striker2.draw(pygame,DISPLAYSURF)
+
 		puck.update(dt , striker.striker1 , striker.striker2)
 		puck.draw(pygame,DISPLAYSURF)
 		
 		score.draw(pygame,DISPLAYSURF)
-		endgame=False
-		
 
-		if endgame==True:
-			break
 		pygame.display.update()
 		fpsClock.tick(FPS)
 
 if __name__ == "__main__": 
 
 
-
-	print(1)
+	global num_player
+	num_player = int(input("number of players : "))
 	pygame.init()
 	FPS = 100
 	fpsClock = pygame.time.Clock()
@@ -240,7 +232,10 @@ if __name__ == "__main__":
 	RED = (255,0,0)
 	WHITE = (0,0,0)
 
-	striker.init_striker(width,height)
+	striker.init_striker1(width,height)
+
+
+	striker.init_striker2(width,height,num_player)
 	score = Score(pygame,width,height)
 	puck = Puck(width,height)
 
