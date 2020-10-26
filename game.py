@@ -1,7 +1,5 @@
 import pygame , sys
-
 import threading
-
 import server
 from pygame.locals import *
 import math
@@ -40,10 +38,11 @@ class Puck():
 		return ((a.y_pos - b.y_pos)**2 + (a.x_pos-b.x_pos)**2)**0.5
 
 	def atan(self,a,b):
+        
 		return math.atan((a.y_pos - b.y_pos) / (a.x_pos - b.y_pos))
 	
 	def update(self , dt , striker1 , striker2):
-		print("1000001")
+		# print("1000001")
 		# if (not(dt)):return
 
 
@@ -137,11 +136,11 @@ class Puck():
 		self.x_pos += self.x_speed * dt * self.c_time
 		self.y_pos += self.y_speed * dt * self.c_time
 
-		print(10000000000000000001,self.x_pos , self.y_pos)
+		# print(10000000000000000001,self.x_pos , self.y_pos)
 		
 
 	def draw(self,pygame,DISPLAYSURF):
-		print("1001")
+		# print("1001")
 		pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
 
 
