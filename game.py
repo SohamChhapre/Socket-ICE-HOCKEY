@@ -1,5 +1,5 @@
 import pygame , sys
-
+import pygame_menu
 import threading
 
 import server
@@ -23,6 +23,10 @@ class Puck():
 		self.x_pos = self.width//2
 		self.y_pos = self.height//2
 		self.c_time = 0.1
+		self.disappear = False
+		self.disappear_time = 0
+		self.def_speed = 5
+		self.collision_const = 10
 
 
 	def restart(self , sign):
@@ -35,6 +39,9 @@ class Puck():
 		self.x_pos = self.width//2
 		self.y_pos = self.height//2
 		self.max_speed = 5
+		self.disappear = False
+		
+		
 
 	def dist(self,a,b):
 		return ((a.y_pos - b.y_pos)**2 + (a.x_pos-b.x_pos)**2)**0.5
@@ -51,14 +58,25 @@ class Puck():
 
 		if (not(dt)):return
 
+		if striker1.disappear_striker == True:
+			self.disappear = True
+			self.disappear_time = time.time()
+			striker1.disappear_striker = False
+		
+		if striker2.disappear_striker == True:
+			self.disappear = True
+			self.disappear_time = time.time()
+			striker2.disappear_striker = False
 
 
+		# show ball after 10 secs
+		if self.disappear and  time.time() - self.disappear_time>=10: # 10 secs
+			self.disappear=False
 
 		# collsion with striker 1
-		if (self.dist(striker1 , self) <= striker1.radius + self.radius + 5):
-			# self.max_speed = (striker1.x_speed**2 + striker1.y_speed**2)**0.5
-			if self.max_speed<5:
-				self.max_speed = 5
+		if (self.dist(striker1 , self) <= striker1.radius + self.radius + self.collision_const):
+			self.max_speed = self.def_speed + striker1.speed_mag
+
 
 			ang = self.atan(striker1 , self)
 
@@ -71,10 +89,8 @@ class Puck():
 				self.y_speed = math.sin(ang) * self.max_speed
 
 		# collsion with striker 2
-		if (self.dist(striker2 , self) <= striker2.radius + self.radius + 5):
-			# self.max_speed = (striker2.x_speed**2 + striker2.y_speed**2)**0.5
-			if self.max_speed<5:
-				self.max_speed = 5
+		if (self.dist(striker2 , self) <= striker2.radius + self.radius + self.collision_const):
+			self.max_speed = self.def_speed + striker2.speed_mag
 
 			ang = self.atan(striker2 , self)
 
@@ -89,37 +105,37 @@ class Puck():
 
 		# collision with left wall
 
-		if self.x_pos - self.radius < 0:
+		if self.x_pos - self.radius -  self.collision_const < 0 :
 			self.x_speed = -self.x_speed
-			self.x_pos = self.radius
+			self.x_pos = self.radius +  self.collision_const
 		
 		# collision with right wall
 
-		if self.x_pos+self.radius > self.width:
+		if self.x_pos + self.radius + self.collision_const > self.width:
 			self.x_speed = -self.x_speed
-			self.x_pos = self.width - self.radius
+			self.x_pos = self.width - self.radius - self.collision_const
 
 		# collision with top wall
 
-		if self.y_pos<self.radius+5:
-			self.y_pos = self.radius +5
+		if self.y_pos < self.radius :
+			self.y_pos = self.radius 
 			self.y_speed = -self.y_speed
 
 		# collision with bottom wall
 
-		if self.y_pos > self.height - self.radius:
-			self.y_pos = self.height - self.radius
+		if self.y_pos > self.height - self.radius :
+			self.y_pos = self.height - self.radius 
 			self.y_speed = -self.y_speed
 
 		# goal condition point of 2
-		if (self.y_pos > self.height - self.radius - 10) and \
+		if (self.y_pos > self.height - self.radius - self.collision_const) and \
 		(self.x_pos > self.width//2 - 100 ) and \
 		(self.x_pos < self.width//2 +100):
 			score.update(s2=1)
 			self.restart("striker2")
 
 		# goal condition point of 1
-		if (self.y_pos < self.radius + 10) and \
+		if (self.y_pos < self.radius + self.collision_const) and \
 		(self.x_pos > self.width//2 - 100 ) and \
 		(self.x_pos < self.width//2 +100 ):
 			score.update(s1=1)
@@ -134,7 +150,8 @@ class Puck():
 
 
 	def draw(self,pygame,DISPLAYSURF):
-		pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
+		if self.disappear == False:
+			pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
 
 
 
@@ -145,13 +162,13 @@ class Score:
 		self.height = height
 		self.score1 = 0
 		self.score2 = 0
-		self.color = (0,0,0)
+		self.color = (0,0,200)
 		self.back = (255,255,255)
 		self.fontObj = pygame.font.Font('freesansbold.ttf', 20)
 		output = "1: " + str(self.score1) + " || 2: "+str(self.score2)
 		self.textSurfaceObj = self.fontObj.render(output , True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 		
 	def update(self,s1 = 0,s2 = 0):
 
@@ -160,36 +177,33 @@ class Score:
 		output = "1: " + str(self.score1) + " || 2: "+str(self.score2)
 		self.textSurfaceObj = self.fontObj.render(output, True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 
 	def text(self,t):
 		self.textSurfaceObj = self.fontObj.render(t, True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
-		self.textRectObj.center = (self.width//2, 20)
+		self.textRectObj.center = (self.width//2, self.height//2)
 
 	def draw(self,pygame,DISPLAYSURF):
 		# DISPLAYSURF.fill(self.back)
 		DISPLAYSURF.blit(self.textSurfaceObj, self.textRectObj)
 
+def draw_rect(hieght , width , DISPLAYSURF , pygame):
+	color = (200,200,200)
+	r = ((width//2)-100 , 0 , 200 , 10)
+	pygame.draw.rect(DISPLAYSURF , color , r )
+	r = ((width//2)-100 , height-10 , 200 , 10)
+	pygame.draw.rect(DISPLAYSURF , color , r )
 
 
 def game():
 
 
-	time.sleep(2)
-	score.text("3")
+
+	score.update(s1 = 0 , s2=0)
+
 	score.draw(pygame,DISPLAYSURF)
-	pygame.display.update()
-	time.sleep(1)
-	score.text("2")
-	score.draw(pygame,DISPLAYSURF)
-	pygame.display.update()
-	time.sleep(1)
-	score.text("1")
-	score.draw(pygame,DISPLAYSURF)
-	pygame.display.update()
-	score.text("GAME STARTS")
-	score.draw(pygame,DISPLAYSURF)
+	
 	pygame.display.update()
 
 
@@ -202,24 +216,30 @@ def game():
 		DISPLAYSURF.blit(bg, (0, 0))
 		striker.striker1.draw(pygame,DISPLAYSURF)
 		if num_player==1:
-			striker.striker2.update_pos(puck)
+			striker.striker2.update_pos_x(puck)
 		striker.striker2.draw(pygame,DISPLAYSURF)
 
 		puck.update(dt , striker.striker1 , striker.striker2)
 		puck.draw(pygame,DISPLAYSURF)
 		
 		score.draw(pygame,DISPLAYSURF)
-
+		draw_rect(height , width , DISPLAYSURF , pygame)
 		pygame.display.update()
 		fpsClock.tick(FPS)
+
+def set_player(value , number):
+	global num_player
+	num_player = number
+	striker.init_striker2(width,height,num_player)
+
+
 
 if __name__ == "__main__": 
 
 
 	global num_player
-	num_player = int(input("number of players : "))
 	pygame.init()
-	FPS = 100
+	FPS = 20
 	fpsClock = pygame.time.Clock()
 
 	width = 400
@@ -232,15 +252,31 @@ if __name__ == "__main__":
 	RED = (255,0,0)
 	WHITE = (0,0,0)
 
+
+
+	menu = pygame_menu.Menu(300, 400, 'Welcome',
+                       theme=pygame_menu.themes.THEME_BLUE)
+
+	# menu.add_text_input('Name :', default='John Doe')
+
+	TEXT1 = "Enter IP address of PC on mobile " 
+	TEXT2 =	"Tilt the mobile move the striker vertically " 
+	TEXT3 = "Slider to control horizontal motion "
+	menu.add_label(TEXT1 , max_char=-1, font_size=15)
+	menu.add_label(TEXT2 , max_char=-1, font_size=15)
+	menu.add_label(TEXT3 , max_char=-1, font_size=15)
+	menu.add_selector('Opponent :', [('Select', 0) , ('Computer', 1), ('Player', 2)], onchange=set_player)
+	menu.add_button('Play', game)
+	menu.add_button('Quit', pygame_menu.events.EXIT)
+	
+	
 	striker.init_striker1(width,height)
-
-
-	striker.init_striker2(width,height,num_player)
+	
 	score = Score(pygame,width,height)
 	puck = Puck(width,height)
 
 
-	t1 = threading.Thread(target=game, args=()) 
+	t1 = threading.Thread(target=menu.mainloop, args=(DISPLAYSURF,)) 
 	t2 = threading.Thread(target=server.start, args=(pygame,DISPLAYSURF,))
 
 	t1.start()
