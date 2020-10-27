@@ -24,6 +24,9 @@ class Puck():
 		self.y_pos = self.height//2
 		self.c_time = 0.1
 		self.disappear = False
+		self.disappear_time = 0
+		self.def_speed = 5
+		self.collision_const = 10
 
 
 	def restart(self , sign):
@@ -36,6 +39,8 @@ class Puck():
 		self.x_pos = self.width//2
 		self.y_pos = self.height//2
 		self.max_speed = 5
+		self.disappear = False
+		
 		
 
 	def dist(self,a,b):
@@ -53,14 +58,25 @@ class Puck():
 
 		if (not(dt)):return
 
+		if striker1.disappear_striker == True:
+			self.disappear = True
+			self.disappear_time = time.time()
+			striker1.disappear_striker = False
+		
+		if striker2.disappear_striker == True:
+			self.disappear = True
+			self.disappear_time = time.time()
+			striker2.disappear_striker = False
 
 
+		# show ball after 10 secs
+		if self.disappear and  time.time() - self.disappear_time>=10: # 10 secs
+			self.disappear=False
 
 		# collsion with striker 1
-		if (self.dist(striker1 , self) <= striker1.radius + self.radius + 5):
-			# self.max_speed = (striker1.x_speed**2 + striker1.y_speed**2)**0.5
-			if self.max_speed<5:
-				self.max_speed = 5
+		if (self.dist(striker1 , self) <= striker1.radius + self.radius + self.collision_const):
+			self.max_speed = self.def_speed + striker1.speed_mag
+
 
 			ang = self.atan(striker1 , self)
 
@@ -73,10 +89,8 @@ class Puck():
 				self.y_speed = math.sin(ang) * self.max_speed
 
 		# collsion with striker 2
-		if (self.dist(striker2 , self) <= striker2.radius + self.radius + 5):
-			# self.max_speed = (striker2.x_speed**2 + striker2.y_speed**2)**0.5
-			if self.max_speed<5:
-				self.max_speed = 5
+		if (self.dist(striker2 , self) <= striker2.radius + self.radius + self.collision_const):
+			self.max_speed = self.def_speed + striker2.speed_mag
 
 			ang = self.atan(striker2 , self)
 
@@ -91,37 +105,37 @@ class Puck():
 
 		# collision with left wall
 
-		if self.x_pos - self.radius < 0:
+		if self.x_pos - self.radius -  self.collision_const < 0 :
 			self.x_speed = -self.x_speed
-			self.x_pos = self.radius
+			self.x_pos = self.radius +  self.collision_const
 		
 		# collision with right wall
 
-		if self.x_pos+self.radius > self.width:
+		if self.x_pos + self.radius + self.collision_const > self.width:
 			self.x_speed = -self.x_speed
-			self.x_pos = self.width - self.radius
+			self.x_pos = self.width - self.radius - self.collision_const
 
 		# collision with top wall
 
-		if self.y_pos<self.radius+5:
-			self.y_pos = self.radius +5
+		if self.y_pos < self.radius :
+			self.y_pos = self.radius 
 			self.y_speed = -self.y_speed
 
 		# collision with bottom wall
 
-		if self.y_pos > self.height - self.radius:
-			self.y_pos = self.height - self.radius
+		if self.y_pos > self.height - self.radius :
+			self.y_pos = self.height - self.radius 
 			self.y_speed = -self.y_speed
 
 		# goal condition point of 2
-		if (self.y_pos > self.height - self.radius - 10) and \
+		if (self.y_pos > self.height - self.radius - self.collision_const) and \
 		(self.x_pos > self.width//2 - 100 ) and \
 		(self.x_pos < self.width//2 +100):
 			score.update(s2=1)
 			self.restart("striker2")
 
 		# goal condition point of 1
-		if (self.y_pos < self.radius + 10) and \
+		if (self.y_pos < self.radius + self.collision_const) and \
 		(self.x_pos > self.width//2 - 100 ) and \
 		(self.x_pos < self.width//2 +100 ):
 			score.update(s1=1)
@@ -136,7 +150,8 @@ class Puck():
 
 
 	def draw(self,pygame,DISPLAYSURF):
-		pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
+		if self.disappear == False:
+			pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
 
 
 
@@ -201,7 +216,7 @@ def game():
 		DISPLAYSURF.blit(bg, (0, 0))
 		striker.striker1.draw(pygame,DISPLAYSURF)
 		if num_player==1:
-			striker.striker2.update_pos(puck)
+			striker.striker2.update_pos_x(puck)
 		striker.striker2.draw(pygame,DISPLAYSURF)
 
 		puck.update(dt , striker.striker1 , striker.striker2)
@@ -217,12 +232,7 @@ def set_player(value , number):
 	num_player = number
 	striker.init_striker2(width,height,num_player)
 
-def exit_game():
-	print("EXITTING")
-	pygame_menu.events.EXIT
-	print("EXITTING 1")
-	# sys.exit() 
-	# quit()
+
 
 if __name__ == "__main__": 
 
@@ -243,7 +253,6 @@ if __name__ == "__main__":
 	WHITE = (0,0,0)
 
 
-	print(1)
 
 	menu = pygame_menu.Menu(300, 400, 'Welcome',
                        theme=pygame_menu.themes.THEME_BLUE)
@@ -260,7 +269,6 @@ if __name__ == "__main__":
 	menu.add_button('Play', game)
 	menu.add_button('Quit', pygame_menu.events.EXIT)
 	
-	print(3)
 	
 	striker.init_striker1(width,height)
 	
