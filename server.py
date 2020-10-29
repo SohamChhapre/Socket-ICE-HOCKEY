@@ -22,8 +22,10 @@ def echo_socket(ws):
 		# print(message)
 
 
-		player , x_data = map(int,message.split(":"))
-
+		player , data = message.split(":")
+		player=int(player)
+		y_data,x_data=map(int,data.split(','))
+		# print(player,x_data,y_data)
 
 
 
@@ -56,13 +58,14 @@ def echo_socket(ws):
 		# print(message)
 
 		player , slide = message.split(":")
-		player = int(player)
-		slide = float(slide)
+		if  not (slide=='Stop' or slide=='Start'):
+			player = int(player)
+			slide = float(slide)
 
-		if player == 1:
-			striker.striker1.update_pos_y(slide , player)
-		else:
-			striker.striker2.update_pos_y(slide , player)
+			if player == 1:
+				striker.striker1.update_pos_y(slide , player)
+			else:
+				striker.striker2.update_pos_y(slide , player)
 
 
 

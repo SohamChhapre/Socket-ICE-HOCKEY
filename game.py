@@ -1,4 +1,4 @@
-import pygame , sys
+import pygame , sys, os
 import pygame_menu
 import threading
 
@@ -8,7 +8,7 @@ import math
 from random import randint
 import striker 
 import time
-
+import subprocess
 
 class Puck():
 	def __init__(self,width,height):
@@ -226,18 +226,23 @@ def game():
 		draw_rect(height , width , DISPLAYSURF , pygame)
 		pygame.display.update()
 		fpsClock.tick(FPS)
+# global num_player
 
 def set_player(value , number):
 	global num_player
 	num_player = number
 	striker.init_striker2(width,height,num_player)
 
+def quit():
+	# print("in quit")
 
+	os._exit(0)
 
 if __name__ == "__main__": 
 
 
 	global num_player
+	# num_player=1
 	pygame.init()
 	FPS = 20
 	fpsClock = pygame.time.Clock()
@@ -245,7 +250,7 @@ if __name__ == "__main__":
 	width = 400
 	height = 600
 	DISPLAYSURF = pygame.display.set_mode((width,height))
-	pygame.display.set_caption('helloworls')
+	pygame.display.set_caption('ICE HOCKEY')
 	bg = pygame.image.load("bg.png") #INSIDE OF THE GAME LOOP gameDisplay.blit(bg, (0, 0)) 
 
 	GREEN = (  0, 255,   0)
@@ -256,10 +261,17 @@ if __name__ == "__main__":
 
 	menu = pygame_menu.Menu(300, 400, 'Welcome',
                        theme=pygame_menu.themes.THEME_BLUE)
+	process = subprocess.Popen(['ipconfig'], 
+                           stdout=subprocess.PIPE)
+	data_list=process.stdout.readlines()
+	if len(data_list)<26:
+		TEXT1="Connect Mobile Hotspot and Start Again"
+	else:
+		ip_data=data_list[25].decode("utf-8")
+		ip=ip_data.split(":")[1].split("\r")[0]
+		# menu.add_text_input('Name :', default='John Doe')
 
-	# menu.add_text_input('Name :', default='John Doe')
-
-	TEXT1 = "Enter IP address of PC on mobile " 
+		TEXT1 = "Enter"+ip+":5001"+ "on your mobile " 
 	TEXT2 =	"Tilt the mobile move the striker vertically " 
 	TEXT3 = "Slider to control horizontal motion "
 	menu.add_label(TEXT1 , max_char=-1, font_size=15)
@@ -267,21 +279,29 @@ if __name__ == "__main__":
 	menu.add_label(TEXT3 , max_char=-1, font_size=15)
 	menu.add_selector('Opponent :', [('Select', 0) , ('Computer', 1), ('Player', 2)], onchange=set_player)
 	menu.add_button('Play', game)
-	menu.add_button('Quit', pygame_menu.events.EXIT)
+	menu.add_button('Quit', quit)
+
+	# menu.add_button('Quit', pygame_menu.events.EXIT)
+
 	
 	
 	striker.init_striker1(width,height)
+	# striker.init_striker2(width,height,1)
 	
 	score = Score(pygame,width,height)
 	puck = Puck(width,height)
 
-
 	t1 = threading.Thread(target=menu.mainloop, args=(DISPLAYSURF,)) 
+	# t1 = threading.Thread(target=game, args=()) 
 	t2 = threading.Thread(target=server.start, args=(pygame,DISPLAYSURF,))
+	# server.start(pygame,DISPLAYSURF)
 
-	t1.start()
+	# t1.start()
 	t2.start() 
-
+	menu.mainloop(DISPLAYSURF)
+	t1.start()
+	
 
 	t1.join()
 	t2.join()
+	
