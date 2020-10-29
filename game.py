@@ -8,7 +8,7 @@ import math
 from random import randint
 import striker 
 import time
-import subprocess
+# import subprocess
 
 class Puck():
 	def __init__(self,width,height):
@@ -40,6 +40,9 @@ class Puck():
 		self.y_pos = self.height//2
 		self.max_speed = 5
 		self.disappear = False
+
+		striker.striker1.reset()
+		striker.striker2.reset()
 		
 		
 
@@ -133,6 +136,9 @@ class Puck():
 		(self.x_pos < self.width//2 +100):
 			score.update(s2=1)
 			self.restart("striker2")
+			score.draw(pygame,DISPLAYSURF)
+			pygame.display.update()
+			time.sleep(1)
 
 		# goal condition point of 1
 		if (self.y_pos < self.radius + self.collision_const) and \
@@ -140,6 +146,9 @@ class Puck():
 		(self.x_pos < self.width//2 +100 ):
 			score.update(s1=1)
 			self.restart("striker1")
+			score.draw(pygame,DISPLAYSURF)
+			pygame.display.update()
+			time.sleep(1)
 
 		# update position from speed
 
@@ -178,6 +187,8 @@ class Score:
 		self.textSurfaceObj = self.fontObj.render(output, True, self.color, self.back)
 		self.textRectObj = self.textSurfaceObj.get_rect()
 		self.textRectObj.center = (self.width//2, self.height//2)
+		
+		
 
 	def text(self,t):
 		self.textSurfaceObj = self.fontObj.render(t, True, self.color, self.back)
@@ -198,31 +209,65 @@ def draw_rect(hieght , width , DISPLAYSURF , pygame):
 
 def game():
 
+	global total_points
 
-
-	score.update(s1 = 0 , s2=0)
-
+	DISPLAYSURF.fill(WHITE)
+	score.text("3")
 	score.draw(pygame,DISPLAYSURF)
-	
+	pygame.display.update()
+	time.sleep(1)
+	score.text("2")
+	score.draw(pygame,DISPLAYSURF)
+	pygame.display.update()
+	time.sleep(1)
+	score.text("1")
+	score.draw(pygame,DISPLAYSURF)
+	pygame.display.update()
+	score.text("GAME STARTS")
+	score.draw(pygame,DISPLAYSURF)
 	pygame.display.update()
 
 
 
+	# score.update(s1 = 0 , s2=0)
 
+	score.draw(pygame,DISPLAYSURF)
+	
+	pygame.display.update()
 	dt = fpsClock.tick(FPS)
 	while True:
+
 		dt = fpsClock.tick(FPS)
+		ev = pygame.event.get()
+		for event in ev:
+		# handle MOUSEBUTTONUP
+			if event.type == pygame.MOUSEBUTTONUP:
+				pause()
+		
 		DISPLAYSURF.fill(WHITE)
-		DISPLAYSURF.blit(bg, (0, 0))
+		DISPLAYSURF.blit(bg, (2, -2))
 		striker.striker1.draw(pygame,DISPLAYSURF)
 		if num_player==1:
 			striker.striker2.update_pos_x(puck)
 		striker.striker2.draw(pygame,DISPLAYSURF)
-
+		score.draw(pygame,DISPLAYSURF)
 		puck.update(dt , striker.striker1 , striker.striker2)
 		puck.draw(pygame,DISPLAYSURF)
+
+		if score.score2 >= total_points or score.score1 >= total_points:
+			if score.score2 >= total_points:
+				score.text("Player2 win")
+			else:
+				score.text("Player1 win")
+			score.draw(pygame,DISPLAYSURF)
+			pygame.display.update()
+			time.sleep(1)
+
+			score.score2 = 0
+			score.score1 = 0
+			break
 		
-		score.draw(pygame,DISPLAYSURF)
+		
 		draw_rect(height , width , DISPLAYSURF , pygame)
 		pygame.display.update()
 		fpsClock.tick(FPS)
@@ -233,6 +278,33 @@ def set_player(value , number):
 	num_player = number
 	striker.init_striker2(width,height,num_player)
 
+def set_points(value , number):
+	global total_points
+	total_points = number
+
+def set_y_control(value , number):
+
+	striker.y_control = number
+	# 1- slider , 2 - sensor
+
+def pause():
+	DISPLAYSURF.fill(WHITE)
+	score.text("PAUSE")
+	score.draw(pygame,DISPLAYSURF)
+	pygame.display.update()
+	flag = 0
+	while(True):
+		ev = pygame.event.get()
+		for event in ev:
+			if event.type == pygame.MOUSEBUTTONUP:
+				flag = 1
+				break
+		if flag == 1:
+			break
+	score.update(s1 = 0 , s2=0)
+	return 
+
+
 def quit():
 	# print("in quit")
 
@@ -242,9 +314,12 @@ if __name__ == "__main__":
 
 
 	global num_player
-	# num_player=1
+	global total_points
+	num_player=1
+	global y_control
+	y_control = 1
 	pygame.init()
-	FPS = 20
+	FPS = 60
 	fpsClock = pygame.time.Clock()
 
 	width = 400
@@ -259,25 +334,20 @@ if __name__ == "__main__":
 
 
 
-	menu = pygame_menu.Menu(300, 400, 'Welcome',
+	menu = pygame_menu.Menu(400, 400, 'Welcome',
                        theme=pygame_menu.themes.THEME_BLUE)
-	process = subprocess.Popen(['ipconfig'], 
-                           stdout=subprocess.PIPE)
-	data_list=process.stdout.readlines()
-	if len(data_list)<26:
-		TEXT1="Connect Mobile Hotspot and Start Again"
-	else:
-		ip_data=data_list[25].decode("utf-8")
-		ip=ip_data.split(":")[1].split("\r")[0]
-		# menu.add_text_input('Name :', default='John Doe')
 
-		TEXT1 = "Enter"+ip+":5001"+ "on your mobile " 
+
+
 	TEXT2 =	"Tilt the mobile move the striker vertically " 
 	TEXT3 = "Slider to control horizontal motion "
-	menu.add_label(TEXT1 , max_char=-1, font_size=15)
+
 	menu.add_label(TEXT2 , max_char=-1, font_size=15)
 	menu.add_label(TEXT3 , max_char=-1, font_size=15)
+
 	menu.add_selector('Opponent :', [('Select', 0) , ('Computer', 1), ('Player', 2)], onchange=set_player)
+	menu.add_selector('Total Points :', [('Select', 0) ,('5', 5) , ('11', 11), ('21', 21)], onchange= set_points)
+	menu.add_selector('Y_COntrol :', [('Select', 0) ,('Slider', 1) , ('sensor', 2)], onchange= set_y_control)
 	menu.add_button('Play', game)
 	menu.add_button('Quit', quit)
 
