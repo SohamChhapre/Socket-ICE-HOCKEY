@@ -17,6 +17,7 @@ sockets = Sockets(app)
 @sockets.route('/accelerometer')
 def echo_socket(ws):
 	global now
+
 	while True:
 		message = ws.receive()
 		# print(message)
@@ -26,6 +27,21 @@ def echo_socket(ws):
 		player=int(player)
 		y_data,x_data=map(int,data.split(','))
 		# print(player,x_data,y_data)
+
+		# print(y_data)
+		if y_data<0:
+			y_data = 0
+		if y_data >90:
+			y_data = 90
+
+		y_data = y_data/9
+
+		if striker.y_control == 2:
+
+			if player == 1:
+				striker.striker1.update_pos_y(y_data , player)
+			else:
+				striker.striker2.update_pos_y(y_data , player)
 
 
 
@@ -53,7 +69,8 @@ def echo_socket(ws):
 @sockets.route('/slider')
 def echo_socket(ws):
 
-	while True:
+	# while True:
+	while striker.y_control == 1:
 		message = ws.receive()
 		# print(message)
 
@@ -106,6 +123,6 @@ def start(pygame1,DISPLAYSURF1):
 	now = time.time()
 	from gevent import pywsgi
 	from geventwebsocket.handler import WebSocketHandler
-	server = pywsgi.WSGIServer(('0.0.0.0', 5001), app, handler_class=WebSocketHandler)
+	server = pywsgi.WSGIServer(('0.0.0.0', 5000), app, handler_class=WebSocketHandler)
 
 	server.serve_forever()

@@ -14,7 +14,7 @@ class Striker():
 		self.color =  (255,255,0) # yellow
 
 		self.x_pos = width//2
-		self.y_max = 100
+		self.y_max = 150
 
 
 		self.x_speed = 2
@@ -36,6 +36,10 @@ class Striker():
 		self.queue = deque()
 		self.lim_length = 100
 		self.speed_const = 1
+
+
+	def reset(self):
+		self.x_pos = self.width//2
 
 	def update_pos_y(self ,  y , player):
 
@@ -103,3 +107,5 @@ def init_striker2(width,height,num_player):
 # height = 600
 # car = Car(width,height)
 
+
+y_control = 1
