@@ -258,6 +258,8 @@ def game():
 					quit = 1
 					break
 		if quit ==1:
+			score.score2 = 0
+			score.score1 = 0
 			break
 
 		
