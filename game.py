@@ -27,6 +27,7 @@ class Puck():
 		self.disappear_time = 0
 		self.def_speed = 5
 		self.collision_const = 10
+		self.disappear_striker_no = 0
 
 
 	def restart(self , sign):
@@ -65,16 +66,19 @@ class Puck():
 			self.disappear = True
 			self.disappear_time = time.time()
 			striker1.disappear_striker = False
+			self.disappear_striker_no = 1
 		
 		if striker2.disappear_striker == True:
 			self.disappear = True
 			self.disappear_time = time.time()
 			striker2.disappear_striker = False
+			self.disappear_striker_no = 2
 
 
 		# show ball after 10 secs
 		if self.disappear and  time.time() - self.disappear_time>=10: # 10 secs
 			self.disappear=False
+			self.disappear_striker_no = 0
 
 		# collsion with striker 1
 		if (self.dist(striker1 , self) <= striker1.radius + self.radius + self.collision_const):
@@ -161,6 +165,11 @@ class Puck():
 	def draw(self,pygame,DISPLAYSURF):
 		if self.disappear == False:
 			pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
+		else:
+			if self.disappear_striker_no == 1 and self.y_pos > self.height//2:
+				pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
+			if self.disappear_striker_no == 2 and self.y_pos < self.height//2:
+				pygame.draw.circle(DISPLAYSURF, self.red, (int(self.x_pos),int(self.y_pos)), self.radius, 0)
 
 
 
@@ -235,14 +244,24 @@ def game():
 	
 	pygame.display.update()
 	dt = fpsClock.tick(FPS)
+	quit = 0
 	while True:
 
 		dt = fpsClock.tick(FPS)
 		ev = pygame.event.get()
 		for event in ev:
 		# handle MOUSEBUTTONUP
-			if event.type == pygame.MOUSEBUTTONUP:
-				pause()
+			if event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_p:
+					pause()
+				if event.key == pygame.K_q:
+					quit = 1
+					break
+		if quit ==1:
+			score.score2 = 0
+			score.score1 = 0
+			break
+
 		
 		DISPLAYSURF.fill(WHITE)
 		DISPLAYSURF.blit(bg, (2, -2))
@@ -288,15 +307,18 @@ def set_y_control(value , number):
 	# 1- slider , 2 - sensor
 
 def pause():
+
 	DISPLAYSURF.fill(WHITE)
 	score.text("PAUSE")
 	score.draw(pygame,DISPLAYSURF)
 	pygame.display.update()
 	flag = 0
 	while(True):
+
+		dt = fpsClock.tick(10)
 		ev = pygame.event.get()
 		for event in ev:
-			if event.type == pygame.MOUSEBUTTONUP:
+			if event.type == pygame.KEYDOWN and event.key == pygame.K_p:
 				flag = 1
 				break
 		if flag == 1:
